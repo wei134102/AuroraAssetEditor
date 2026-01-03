@@ -13,20 +13,40 @@
             <ColumnDefinition Width="Auto" />
             <ColumnDefinition Width="Auto" />
         </Grid.ColumnDefinitions>
-        <Grid Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" x:Name="LocaleGrid" MinWidth="300">
+        <Grid Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
+                <ColumnDefinition />
             </Grid.ColumnDefinitions>
-            <TextBlock Text="Locale:" Margin="10" />
-            <ComboBox x:Name="LocaleBox" Grid.Column="1" HorizontalAlignment="Left" Margin="0,10,0,10" />
+            <Grid Grid.Column="0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="Select source:" Margin="10" />
+                <ComboBox x:Name="SourceBox" Grid.Column="1" MinWidth="150" HorizontalAlignment="Left" Margin="0,10,0,10" >
+                    <ComboBoxItem Content="Xboxunity.net" />
+                    <ComboBoxItem>Internet Archive</ComboBoxItem>
+                </ComboBox>
+            </Grid>
+            <Grid Grid.Column="1" Visibility="Hidden" x:Name="LocaleGrid">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="Locale:" Margin="10" />
+                <ComboBox x:Name="LocaleBox" Grid.Column="1" HorizontalAlignment="Left"
+                          Margin="0, 10, 0, 10" />
+            </Grid>
         </Grid>
         <TextBlock Grid.Row="1" Grid.Column="0" HorizontalAlignment="Right" Text="Replace Existing?" Margin="0,0,5,0" />
         <CheckBox Grid.Row="1" Grid.Column="1" MinWidth="10" x:Name="ReplaceExistingChk" x:FieldModifier="private"
-                 HorizontalAlignment="Stretch" Margin="0,0,5,0" />
+                  HorizontalAlignment="Stretch" Margin="0,0,5,0" />
         <TextBlock Grid.Row="2" Grid.Column="0" HorizontalAlignment="Right" Text="Cover Art Only?" Margin="0,0,5,0" />
         <CheckBox Grid.Row="2" Grid.Column="1" MinWidth="10" x:Name="CoverArtOnlyChk" x:FieldModifier="private"
-                 HorizontalAlignment="Stretch" Margin="0,0,5,0" IsChecked="True" />
+                  HorizontalAlignment="Stretch" Margin="0,0,5,0" IsChecked="True"
+                  Checked="CoverArtOnlyChk_Checked" Unchecked="CoverArtOnlyChk_Unchecked"/>
         <WrapPanel Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" HorizontalAlignment="Right" Margin="0,15,0,0"
                    VerticalAlignment="Bottom">
             <Button x:Name="OkButton" IsDefault="True" Click="btnDialogOk_Click" MinWidth="60" Margin="0,0,10,0">

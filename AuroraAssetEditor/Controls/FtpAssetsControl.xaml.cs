@@ -22,12 +22,14 @@ namespace AuroraAssetEditor.Controls {
     using AuroraAssetEditor.Models;
     using Classes;
     using Helpers;
-    using static AuroraAssetEditor.Classes.XboxTitleInfo;
+	using Image = System.Drawing.Image;
+	using static AuroraAssetEditor.Classes.XboxTitleInfo;
+	using static AuroraAssetEditor.Classes.XboxUnity;
 
-    /// <summary>
-    ///     Interaction logic for FtpAssetsControl.xaml
-    /// </summary>
-    public partial class FtpAssetsControl {
+	/// <summary>
+	///     Interaction logic for FtpAssetsControl.xaml
+	/// </summary>
+	public partial class FtpAssetsControl {
         private readonly InternetArchiveDownloader _internetArchiveDownloader = new InternetArchiveDownloader();
         private readonly XboxAssetDownloader _xboxAssetDownloader = new XboxAssetDownloader();
         private readonly Random _rand = new Random();
@@ -461,6 +463,7 @@ namespace AuroraAssetEditor.Controls {
 			XboxLocale xboxLocale = dialog.Locale;
 			bool replaceExisting = dialog.ReplaceExisting;
             bool coverArtOnly = dialog.CoverArtOnly;
+			bool unitySource = dialog.UnitySource;
             var shouldUseCompression = false;
             Dispatcher.Invoke(new Action(() => shouldUseCompression = _main.UseCompression.IsChecked));
 
@@ -494,23 +497,45 @@ namespace AuroraAssetEditor.Controls {
 
                         if (!boxart)
                         {
-                            SetStatusText(string.Format("Downloading XBOX Assets for {0}", asset.TitleName));
-                            InternetArchiveAsset[] archiveResults = _internetArchiveDownloader.GetTitleInfo(titleId);
-                            if (archiveResults.Length != 0)
-                            {
-                                // choose a random result
-                                int index = _rand.Next(0, archiveResults.Length);
-                                InternetArchiveAsset archive = archiveResults[index];
+							Image cover = null;
 
-                                AuroraAsset.AssetFile aurora = new AuroraAsset.AssetFile();
-                                aurora.SetBoxart(archive.GetCover(), shouldUseCompression);
-                                if (aurora.HasBoxArt)
-                                {
-                                    asset.SaveAsBoxart(aurora.FileData);
-                                    boxart = true;
-                                }
-                            }
-                        }
+							SetStatusText(string.Format("Downloading XBOX Assets for {0}", asset.TitleName));
+							if (unitySource)
+							{
+								XboxUnityAsset[] unityResults = XboxUnity.GetUnityCoverInfo(string.Format("{0:X08}", titleId));
+								if (unityResults.Length != 0)
+								{
+									// choose a random result
+									int index = _rand.Next(0, unityResults.Length);
+									XboxUnityAsset unity = unityResults[index];
+
+									cover = unity.GetCover();
+								}
+							}
+							else
+							{
+								InternetArchiveAsset[] archiveResults = _internetArchiveDownloader.GetTitleInfo(titleId);
+								if (archiveResults.Length != 0)
+								{
+									// choose a random result
+									int index = _rand.Next(0, archiveResults.Length);
+									InternetArchiveAsset archive = archiveResults[index];
+
+									cover = archive.GetCover();
+								}
+							}
+
+							if (cover != null)
+							{
+								AuroraAsset.AssetFile aurora = new AuroraAsset.AssetFile();
+								aurora.SetBoxart(cover, shouldUseCompression);
+								if (aurora.HasBoxArt)
+								{
+									asset.SaveAsBoxart(aurora.FileData);
+									boxart = true;
+								}
+							}
+						}
 
                         if (!coverArtOnly && !(background && iconBanner && screenshots))
                         {
@@ -519,45 +544,48 @@ namespace AuroraAssetEditor.Controls {
                             XboxAssetInfo icon = null, banner = null;
 
                             SetStatusText(string.Format("Downloading XBOX Assets for {0}", asset.TitleName));
-                            XboxTitleInfo xboxResult = _xboxAssetDownloader.GetTitleInfo(titleId, xboxLocale)[0];
-                            foreach (XboxAssetInfo info in xboxResult.AssetsInfo)
-                            {
-                                switch (info.AssetType)
-                                {
-                                    case XboxTitleInfo.XboxAssetType.Icon:
-                                    case XboxTitleInfo.XboxAssetType.Banner:
-                                        if (!iconBanner)
-                                        {
-                                            AuroraAsset.AssetFile aurora = new AuroraAsset.AssetFile();
-                                            if (info.AssetType == XboxTitleInfo.XboxAssetType.Icon)
-                                                icon = info;
-                                            else
-                                                banner = info;
-                                        }
-                                        break;
-                                    case XboxTitleInfo.XboxAssetType.Background:
-                                        if (!background)
-                                        {
-                                            AuroraAsset.AssetFile aurora = new AuroraAsset.AssetFile();
-                                            aurora.SetBackground(info.GetAsset().Image, shouldUseCompression);
-                                            if (aurora.HasBackground)
-                                            {
-                                                asset.SaveAsBackground(aurora.FileData);
-                                                background = true;
-                                            }
-                                        }
-                                        break;
-                                    case XboxTitleInfo.XboxAssetType.Screenshot:
-                                        if (!screenshots && current_ss < max_ss)
-                                        {
-                                            current_ss++;
+                            XboxTitleInfo[] xboxResults = _xboxAssetDownloader.GetTitleInfo(titleId, xboxLocale);
+							if (xboxResults.Length != 0)
+							{
+								foreach (XboxAssetInfo info in xboxResults[0].AssetsInfo)
+								{
+									switch (info.AssetType)
+									{
+										case XboxTitleInfo.XboxAssetType.Icon:
+										case XboxTitleInfo.XboxAssetType.Banner:
+											if (!iconBanner)
+											{
+												AuroraAsset.AssetFile aurora = new AuroraAsset.AssetFile();
+												if (info.AssetType == XboxTitleInfo.XboxAssetType.Icon)
+													icon = info;
+												else
+													banner = info;
+											}
+											break;
+										case XboxTitleInfo.XboxAssetType.Background:
+											if (!background)
+											{
+												AuroraAsset.AssetFile aurora = new AuroraAsset.AssetFile();
+												aurora.SetBackground(info.GetAsset().Image, shouldUseCompression);
+												if (aurora.HasBackground)
+												{
+													asset.SaveAsBackground(aurora.FileData);
+													background = true;
+												}
+											}
+											break;
+										case XboxTitleInfo.XboxAssetType.Screenshot:
+											if (!screenshots && current_ss < max_ss)
+											{
+												current_ss++;
 
-                                            // save screenshot to list
-                                            screenshots_list.Add(info);
-                                        }
-                                        break;
-                                }
-                            }
+												// save screenshot to list
+												screenshots_list.Add(info);
+											}
+											break;
+									}
+								}
+							}
 
                             if (icon != null || banner != null)
                             {
